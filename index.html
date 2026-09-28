@@ -5,37 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>3D Сцена - GLB модель по кругу | Three.js</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         #info {
-            position: absolute; top: 20px; left: 20px; color: white;
-            background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 8px;
-            pointer-events: none; z-index: 10; backdrop-filter: blur(5px);
-            font-size: 14px; font-weight: 500;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-left: 4px solid #ff9800;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 15px;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border-left: 4px solid #ff9800;
         }
         #controls-note {
-            position: absolute; bottom: 20px; left: 20px;
-            color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.5);
-            padding: 5px 12px; border-radius: 6px; font-size: 12px;
-            font-family: monospace; pointer-events: none; z-index: 10;
-        }
-        #status {
-            position: absolute; top: 20px; right: 20px;
-            color: white; background: rgba(0,0,0,0.7);
-            padding: 8px 12px; border-radius: 6px; font-size: 12px;
-            font-family: monospace; z-index: 10; max-width: 320px;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255,255,255,0.7);
+            background: rgba(0,0,0,0.5);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 10;
         }
         @media (max-width: 600px) {
             #info { font-size: 10px; top: 10px; left: 10px; }
             #controls-note { font-size: 8px; }
-            #status { font-size: 9px; max-width: 180px; }
         }
     </style>
 </head>
 <body>
-    <div id="info">🎨 GLB модель (движется по кругу)</div>
-    <div id="controls-note">🖱️ Управление камерой: Мышь / тачпад (OrbitControls)</div>
-    <div id="status">⏳ Загрузка модели...</div>
+    <div id="info">
+        🎨 GLB модель (движется по кругу)
+    </div>
+    <div id="controls-note">
+        🖱️ Управление камерой: Мышь / тачпад (OrbitControls)
+    </div>
 
     <script type="importmap">
         {
@@ -51,15 +67,13 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-        const statusEl = document.getElementById('status');
-
-        // --- Сцена, камера, рендерер ---
+        // --- Инициализация сцены, камеры, рендерера ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x111122);
         scene.fog = new THREE.FogExp2(0x111122, 0.008);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(6, 4, 8);
+        camera.position.set(6, 5, 8);
         camera.lookAt(0, 0, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -68,144 +82,173 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // --- Контролы ---
+        // --- Орбит контролы для управления камерой ---
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.enablePan = true;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+        controls.rotateSpeed = 1.0;
         controls.target.set(0, 0, 0);
 
-        // --- Свет ---
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(5, 10, 7);
-        dirLight.castShadow = true;
-        scene.add(dirLight);
-        const fillLight = new THREE.PointLight(0x88aaff, 0.6);
-        fillLight.position.set(-5, 3, 5);
+        // --- Освещение ---
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(3, 5, 2);
+        directionalLight.castShadow = true;
+        directionalLight.receiveShadow = false;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        scene.add(directionalLight);
+
+        const backLight = new THREE.PointLight(0x556688, 0.5);
+        backLight.position.set(-2, 1, -3);
+        scene.add(backLight);
+
+        const warmLight = new THREE.PointLight(0xffaa66, 0.6);
+        warmLight.position.set(2, 1.5, 1.5);
+        scene.add(warmLight);
+
+        const fillLight = new THREE.PointLight(0x88aaff, 0.4);
+        fillLight.position.set(0, 1, 3);
         scene.add(fillLight);
 
-        // --- Сетка и оси (для ориентации) ---
-        const gridHelper = new THREE.GridHelper(20, 20, 0x88aaff, 0x335588);
+        // Дополнительный свет для модели, чтобы она была хорошо освещена
+        const rightLight = new THREE.PointLight(0xffaa88, 0.5);
+        rightLight.position.set(4, 1, 2);
+        scene.add(rightLight);
+
+        // --- Вспомогательные элементы (сетка, оси) ---
+        const gridHelper = new THREE.GridHelper(14, 20, 0x88aaff, 0x335588);
         gridHelper.position.y = -1.2;
         gridHelper.material.transparent = true;
-        gridHelper.material.opacity = 0.4;
+        gridHelper.material.opacity = 0.35;
         scene.add(gridHelper);
-        scene.add(new THREE.AxesHelper(3.5));
 
-        // --- Параметры движения по кругу ---
-        const orbitRadius = 3.0;
-        const orbitSpeed = 0.8;
-        const orbitHeight = 0.0;
-        let orbitAngle = 0;
+        const axesHelper = new THREE.AxesHelper(3.5);
+        axesHelper.material.transparent = true;
+        axesHelper.material.opacity = 0.12;
+        scene.add(axesHelper);
 
-        let importedModel = null;
-
-        // --- Вспомогательная функция: подгоняем модель под нужный размер и ставим по центру ---
-        function fitModelToScene(model, targetSize = 2.0) {
-            const box = new THREE.Box3().setFromObject(model);
-            const size = new THREE.Vector3();
-            const center = new THREE.Vector3();
-            box.getSize(size);
-            box.getCenter(center);
-
-            console.log('📦 Размер модели:', size);
-            console.log('📦 Центр модели:', center);
-
-            // Сдвигаем модель так, чтобы её геометрический центр был в начале координат
-            model.position.sub(center);
-
-            // Масштабируем до targetSize по самому большому измерению
-            const maxDim = Math.max(size.x, size.y, size.z);
-            if (maxDim > 0) {
-                const scale = targetSize / maxDim;
-                model.scale.setScalar(scale);
-                console.log(`🔧 Применён масштаб: ${scale.toFixed(3)}`);
-            }
-        }
-
-        // --- Загрузка GLB ---
+        // --- Загрузка GLB модели по прямой ссылке ---
         const loader = new GLTFLoader();
-        // ⚠️ ПРЯМАЯ ссылка на raw-файл (blob → raw)
         const modelPath = 'https://raw.githubusercontent.com/Gleb8943/3D.io/main/untitled.glb';
 
-        statusEl.textContent = '⏳ Загрузка: ' + modelPath;
+        // Переменная для хранения модели
+        let importedModel = null;
 
-        loader.load(
-            modelPath,
+        // --- Параметры орбитального движения ---
+        // Модель будет двигаться по кругу радиуса ORBIT_RADIUS вокруг центра сцены.
+        // Если добавите другие объекты — задайте им свой угол (angleOffset).
+        const ORBIT_RADIUS = 2.5;      // радиус круга
+        const ORBIT_SPEED = 0.6;       // скорость движения по кругу (рад/сек)
+        let orbitAngle = 0;            // текущий угол модели на орбите
+
+        loader.load(modelPath,
             (gltf) => {
                 importedModel = gltf.scene;
-
-                // Тени и материалы
+                // Настройка материалов и теней
                 importedModel.traverse((child) => {
                     if (child.isMesh) {
                         child.castShadow = true;
                         child.receiveShadow = false;
+                        if (child.material) {
+                            child.material.roughness = 0.4;
+                            child.material.metalness = 0.3;
+                        }
                     }
                 });
 
-                // Подгоняем размер и центрируем
-                fitModelToScene(importedModel, 2.0);
+                // Масштабируем модель
+                importedModel.scale.set(0.9, 0.9, 0.9);
 
-                // Начальная позиция на окружности
-                importedModel.position.set(orbitRadius, orbitHeight, 0);
+                // Стартовая позиция — начало круга (можно задать смещение угла)
+                importedModel.position.set(ORBIT_RADIUS, -0.3, 0);
 
                 scene.add(importedModel);
-
-                statusEl.style.background = 'rgba(0,150,0,0.8)';
-                statusEl.textContent = '✅ Модель загружена и движется по кругу';
                 console.log('✅ Модель успешно загружена!');
+
+                // Показываем сообщение об успехе
+                const successMsg = document.createElement('div');
+                successMsg.style.position = 'absolute';
+                successMsg.style.bottom = '20px';
+                successMsg.style.right = '20px';
+                successMsg.style.backgroundColor = 'rgba(0,255,0,0.7)';
+                successMsg.style.color = 'white';
+                successMsg.style.padding = '5px 10px';
+                successMsg.style.borderRadius = '5px';
+                successMsg.style.fontSize = '12px';
+                successMsg.innerText = '✅ 3D модель загружена и движется по кругу!';
+                document.body.appendChild(successMsg);
+                setTimeout(() => successMsg.remove(), 3000);
             },
             (xhr) => {
-                if (xhr.total) {
-                    const pct = ((xhr.loaded / xhr.total) * 100).toFixed(0);
-                    statusEl.textContent = `⏳ Загрузка: ${pct}%`;
-                }
+                // Прогресс загрузки
             },
             (error) => {
                 console.error('❌ Ошибка загрузки модели:', error);
-                statusEl.style.background = 'rgba(200,0,0,0.85)';
-                statusEl.innerHTML =
-                    '❌ Не удалось загрузить модель.<br>' +
-                    '<small>1) Проверьте, что репозиторий публичный.<br>' +
-                    '2) Используйте raw-ссылку, а не blob.<br>' +
-                    '3) Откройте консоль (F12) для деталей.</small>';
-
-                // 🔁 ЗАПАСНОЙ ВАРИАНТ: показываем простой куб вместо модели,
-                // чтобы сцена не была пустой
-                const fallback = new THREE.Mesh(
-                    new THREE.BoxGeometry(1.5, 1.5, 1.5),
-                    new THREE.MeshStandardMaterial({ color: 0xff9800, metalness: 0.3, roughness: 0.4 })
-                );
-                fallback.castShadow = true;
-                fallback.position.set(orbitRadius, orbitHeight, 0);
-                scene.add(fallback);
-                importedModel = fallback;
-                console.log('ℹ️ Показан запасной куб вместо модели.');
+                const errorMsg = document.createElement('div');
+                errorMsg.style.position = 'absolute';
+                errorMsg.style.bottom = '20px';
+                errorMsg.style.right = '20px';
+                errorMsg.style.backgroundColor = 'rgba(255,0,0,0.8)';
+                errorMsg.style.color = 'white';
+                errorMsg.style.padding = '10px';
+                errorMsg.style.borderRadius = '5px';
+                errorMsg.style.fontSize = '12px';
+                errorMsg.style.maxWidth = '300px';
+                errorMsg.innerHTML = '❌ Ошибка: не удалось загрузить модель по ссылке!<br><small>Проверьте прямую ссылку на GLB</small>';
+                document.body.appendChild(errorMsg);
             }
         );
 
         // --- Анимация ---
+        const clock = new THREE.Clock();
+
         function animate() {
             requestAnimationFrame(animate);
 
+            const delta = clock.getDelta();
+
+            // --- Орбитальное движение модели по кругу ---
             if (importedModel) {
-                orbitAngle += 0.016 * orbitSpeed;
-                importedModel.position.x = Math.cos(orbitAngle) * orbitRadius;
-                importedModel.position.z = Math.sin(orbitAngle) * orbitRadius;
-                importedModel.position.y = orbitHeight;
+                orbitAngle += ORBIT_SPEED * delta;
+
+                // Позиция на окружности в плоскости XZ
+                const x = Math.cos(orbitAngle) * ORBIT_RADIUS;
+                const z = Math.sin(orbitAngle) * ORBIT_RADIUS;
+
+                importedModel.position.set(x, -0.3, z);
+
+                // Поворачиваем модель "лицом" по направлению движения.
+                // Если модель смотрит не в ту сторону — измените константу ниже (например, на Math.PI/2).
+                importedModel.rotation.y = -orbitAngle;
             }
 
+            // Небольшая динамика у дополнительного света
+            if (rightLight) {
+                rightLight.intensity = 0.5 + Math.sin(performance.now() * 0.0015) * 0.15;
+            }
+
+            // Обновление контролов и рендер
             controls.update();
             renderer.render(scene, camera);
         }
+
         animate();
 
-        // --- Resize ---
-        window.addEventListener('resize', () => {
+        // --- Обработка изменения размера окна ---
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        }
     </script>
 </body>
 </html>
